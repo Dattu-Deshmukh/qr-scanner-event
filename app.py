@@ -1,52 +1,39 @@
 import streamlit as st
-import pandas as pd
-import json
 from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
-import av
 import cv2
+import pandas as pd
+import qrcode
+import numpy as np
 
 # Load student data
-df = pd.read_csv("students.csv")
+student_df = pd.read_csv("students.csv")
+valid_tokens = set(student_df["Roll Number"].astype(str))
 
-st.set_page_config(page_title="Event QR Code Scanner", layout="centered")
-st.title("🎓 Event QR Code Scanner")
-st.write("Scan your QR code to check if you're allowed into the event.")
+# Display
+st.title("🎓 College Event QR Scanner")
+st.markdown("📷 Scan student QR code to verify entry")
 
-# ===================== QR SCANNER LOGIC =====================
+# Result display box
+result_box = st.empty()
 
+# Custom Video Processor
 class QRScanner(VideoProcessorBase):
     def __init__(self):
-        self.result = None
+        self.last_scanned = None
 
     def recv(self, frame):
         img = frame.to_ndarray(format="bgr24")
         detector = cv2.QRCodeDetector()
         data, bbox, _ = detector.detectAndDecode(img)
+        
+        if data and data != self.last_scanned:
+            self.last_scanned = data
+            if data in valid_tokens:
+                result_box.success("✅ Allowed: Welcome to the event!")
+            else:
+                result_box.error("❌ Not Allowed: Invalid QR Code")
 
-        if data:
-            try:
-                parsed = json.loads(data)
-                roll = parsed.get("roll_no", "").strip()
-                match = df[df["Roll Number"].astype(str).str.strip() == roll]
+        return img
 
-                if not match.empty:
-                    self.result = f"✅ Welcome {match.iloc[0]['Name']}! 🎉 You are allowed to the event."
-                else:
-                    self.result = "❌ Not allowed. Roll number not found."
-            except:
-                self.result = "❌ Invalid QR format."
-
-        return av.VideoFrame.from_ndarray(img, format="bgr24")
-
-
-ctx = webrtc_streamer(
-    key="qr-scanner",
-    video_processor_factory=QRScanner,
-    media_stream_constraints={"video": True, "audio": False},
-    async_processing=True,
-)
-
-if ctx.video_processor:
-    result = ctx.video_processor.result
-    if result:
-        st.info(result)
+# Start WebRTC Camera Stream
+webrtc_streamer(key="qr-scanner", video_processor_factory=QRScanner)
