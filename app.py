@@ -113,7 +113,7 @@ if image is not None:
             elif not student.empty:
                 details_box.markdown(
                     '<div class="details-box" style="background-color: #d32f2f; color: white;">'
-                    f'❌ Already Scanned: {roll_number}'
+                    f'❌ Already Scanned: {roll_number}\n\n You're not allowed'
                     '</div>',
                     unsafe_allow_html=True
                 )
