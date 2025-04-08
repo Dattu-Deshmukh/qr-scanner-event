@@ -1,4 +1,6 @@
 streamlit
-opencv-python
-streamlit-webrtc
+opencv-python-headless
 pandas
+numpy
+Pillow
+json
