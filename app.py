@@ -43,13 +43,13 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Coordinator credentials (hardcoded for simplicity; use env vars or DB in production)
+# Coordinator credentials
 VALID_CREDENTIALS = {
-    "coord1": "FAIRWELL2K25",  # Admin or Coordinator 1
-    "coord2": "PARTY2025",     # Coordinator 2
-    "coord3": "EVENT2025",     # Coordinator 3
-    "coord4": "WELCOME2025",   # Coordinator 4
-    "coord5": "CELEBRATE2025"  # Coordinator 5
+    "coord1": "FAIRWELL2K25",
+    "coord2": "PARTY2025",
+    "coord3": "EVENT2025",
+    "coord4": "WELCOME2025",
+    "coord5": "CELEBRATE2025"
 }
 
 # Login function
