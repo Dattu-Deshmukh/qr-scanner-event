@@ -43,10 +43,19 @@ st.markdown(
 try:
     student_df = pd.read_csv("students.csv")
     student_df["Roll Number"] = student_df["Roll Number"].astype(str)
+    # Map columns flexibly
+    column_mapping = {
+        "Roll Number": next((col for col in student_df.columns if "roll" in col.lower()), "Roll Number"),
+        "Student Name": next((col for col in student_df.columns if "name" in col.lower()), "Student Name"),
+        "Department": next((col for col in student_df.columns if "dept" in col.lower()), "Department")
+    }
     if "Scanned" not in student_df.columns:
         student_df["Scanned"] = False
 except FileNotFoundError:
     st.error("❌ Error: 'students.csv' not found. Please upload the student data file.")
+    st.stop()
+except Exception as e:
+    st.error(f"❌ Error loading CSV: {str(e)}. Please check the file format.")
     st.stop()
 
 # UI Setup
@@ -86,12 +95,12 @@ if image is not None:
         roll_number = extract_roll_number(qr_data)
         if roll_number:
             # Check if roll number exists and hasn't been scanned
-            student = student_df[student_df["Roll Number"] == roll_number]
+            student = student_df[student_df[column_mapping["Roll Number"]] == roll_number]
             if not student.empty and not student["Scanned"].iloc[0]:
-                # Display student details
-                roll = student["Roll Number"].iloc[0]
-                name = student["Student Name"].iloc[0]
-                dept = student["Department"].iloc[0]
+                # Display student details using mapped columns
+                roll = student[column_mapping["Roll Number"]].iloc[0]
+                name = student[column_mapping["Student Name"]].iloc[0]
+                dept = student[column_mapping["Department"]].iloc[0]
                 details_box.markdown(
                     '<div class="details-box" style="background-color: #424242; color: white;">'
                     f'✅ Welcome!\n\n**Roll Number**: {roll}\n**Name**: {name}\n**Department**: {dept}'
@@ -99,7 +108,7 @@ if image is not None:
                     unsafe_allow_html=True
                 )
                 # Mark as scanned
-                student_df.loc[student_df["Roll Number"] == roll_number, "Scanned"] = True
+                student_df.loc[student_df[column_mapping["Roll Number"]] == roll_number, "Scanned"] = True
                 student_df.to_csv("students.csv", index=False)  # Save updated status
             elif not student.empty:
                 details_box.markdown(
