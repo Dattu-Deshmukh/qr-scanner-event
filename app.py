@@ -8,28 +8,19 @@ import time
 # Load student data
 try:
     student_df = pd.read_csv("students.csv")
-    # Ensure Roll Number is string type and create a set of valid, unscanned roll numbers
     student_df["Roll Number"] = student_df["Roll Number"].astype(str)
     if "Scanned" not in student_df.columns:
         student_df["Scanned"] = False
-    valid_tokens = set(student_df[student_df["Scanned"] == False]["Roll Number"])
 except FileNotFoundError:
-    st.error("❌ Error: 'students.csv' not found. Please provide the student data file.")
+    st.error("❌ Error: 'students.csv' not found. Please upload the student data file.")
     st.stop()
 
 # UI Setup
 st.title("🎉 2k25 Farewell Party Event")
-st.markdown("📷 Scan your QR code below to check entry!")
+st.markdown("📷 Point your QR code at the camera to verify entry")
 
-# Result Display and Scanned List
-result_box = st.empty()
-scanned_list = st.sidebar.empty()
-st.sidebar.title("✅ Scanned Students")
-update_scanned = st.sidebar.button("Refresh Scanned List")
-
-# Initialize session state for tracking scanned roll numbers
-if "scanned_rolls" not in st.session_state:
-    st.session_state.scanned_rolls = []
+# Placeholder for student details
+details_box = st.empty()
 
 # QR Scanner Class
 class QRScanner(VideoProcessorBase):
@@ -43,30 +34,29 @@ class QRScanner(VideoProcessorBase):
         data, bbox, _ = detector.detectAndDecode(img)
 
         current_time = time.time()
-        # Process QR code only if new data is detected and 2 seconds have passed since last scan
+        # Process QR code only if new data is detected and 2 seconds have passed
         if data and data != self.last_data and (current_time - self.last_scan_time > 2):
             self.last_data = data
             self.last_scan_time = current_time
 
-            if data in valid_tokens:
-                result_box.success(f"✅ Welcome! Roll Number: {data}")
-                # Mark as scanned in dataframe and update valid_tokens
+            # Check if roll number exists and hasn't been scanned
+            student = student_df[student_df["Roll Number"] == data]
+            if not student.empty and not student["Scanned"].iloc[0]:
+                # Display student details
+                roll = student["Roll Number"].iloc[0]
+                name = student["Student Name"].iloc[0]
+                dept = student["Department"].iloc[0]
+                details_box.success(f"✅ Valid Entry\n\n**Roll Number**: {roll}\n**Name**: {name}\n**Department**: {dept}")
+                # Mark as scanned
                 student_df.loc[student_df["Roll Number"] == data, "Scanned"] = True
-                valid_tokens.remove(data)
-                st.session_state.scanned_rolls.append(data)
                 student_df.to_csv("students.csv", index=False)  # Save updated status
+            elif not student.empty:
+                details_box.error(f"❌ Already Scanned: {data}")
             else:
-                if data in student_df["Roll Number"].values:
-                    result_box.error(f"❌ Already Scanned: Roll Number {data}")
-                else:
-                    result_box.error("❌ Invalid QR Code")
+                details_box.error(f"❌ Invalid QR Code: {data}")
 
-        # Convert back to VideoFrame for streamlit_webrtc
+        # Return the frame for display
         return av.VideoFrame.from_ndarray(img, format="bgr24")
-
-# Display scanned students in sidebar
-if update_scanned or st.session_state.scanned_rolls:
-    scanned_list.write(st.session_state.scanned_rolls)
 
 # Start the webcam stream
 webrtc_streamer(
@@ -78,4 +68,4 @@ webrtc_streamer(
 
 # Instructions
 st.markdown("---")
-st.write("**Instructions**: Point your QR code at the camera. One-time use only!")
+st.write("**Instructions**: Show your QR code to the camera. Valid codes display your details!")
