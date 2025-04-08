@@ -1,53 +1,49 @@
 import streamlit as st
-import pandas as pd
 import cv2
-from pyzbar.pyzbar import decode
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
+import numpy as np
+from PIL import Image
+import pandas as pd
 
-st.set_page_config(page_title="QR Code Scanner", layout="centered")
+# Page settings
+st.set_page_config(page_title="🎓 Event QR Code Scanner", layout="centered")
+st.title("🎓 Event QR Code Scanner")
+st.write("📷 Upload a QR code image or manually enter token")
 
+# Load student data
 @st.cache_data
 def load_data():
     return pd.read_csv("students.csv")
 
 df = load_data()
 
-st.title("🎓 Event QR Code Scanner")
-st.write("📷 Scan your QR code below or enter token manually")
+# Upload QR image
+uploaded_file = st.file_uploader("Upload QR Code Image", type=["png", "jpg", "jpeg"])
 
-# Webcam QR scanner
-class QRScanner(VideoTransformerBase):
-    def __init__(self):
-        self.result = None
+# QR Code Detector
+if uploaded_file is not None:
+    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
+    img = cv2.imdecode(file_bytes, 1)
 
-    def transform(self, frame):
-        image = frame.to_ndarray(format="bgr24")
-        decoded_objs = decode(image)
-        for obj in decoded_objs:
-            self.result = obj.data.decode("utf-8")
-            cv2.rectangle(image, (obj.rect.left, obj.rect.top),
-                          (obj.rect.left + obj.rect.width, obj.rect.top + obj.rect.height),
-                          (0, 255, 0), 2)
-        return image
+    detector = cv2.QRCodeDetector()
+    data, bbox, _ = detector.detectAndDecode(img)
 
-ctx = webrtc_streamer(key="qr-scanner", video_transformer_factory=QRScanner)
-
-if ctx.video_transformer and ctx.video_transformer.result:
-    token = ctx.video_transformer.result
-    st.success(f"Scanned Token: {token}")
-
-    student = df[df["Roll Number"] == token]
-    if not student.empty:
-        st.success(f"✅ Verified: {student.iloc[0]['Name']} ({student.iloc[0]['Dept.Branch']})")
+    if data:
+        st.success(f"✅ Scanned Token: {data}")
+        matched = df[df['Roll Number'].astype(str).str.strip() == data.strip()]
+        if not matched.empty:
+            student = matched.iloc[0]
+            st.info(f"🎉 Name: {student['Name']} \n\n 🏷️ Dept.Branch: {student['Dept.Branch']}")
+        else:
+            st.error("⚠️ Token not found in students.csv")
     else:
-        st.error("❌ Invalid QR Code or Student not found.")
+        st.warning("❌ No QR code detected in image.")
 
 # Manual entry fallback
-st.markdown("---")
-manual_token = st.text_input("Or manually enter token (Roll Number)")
-if manual_token:
-    student = df[df["Roll Number"] == manual_token]
-    if not student.empty:
-        st.success(f"✅ Verified: {student.iloc[0]['Name']} ({student.iloc[0]['Dept.Branch']})")
+token = st.text_input("Or enter scanned token (e.g., Roll Number):")
+if st.button("Check Token"):
+    matched = df[df['Roll Number'].astype(str).str.strip() == token.strip()]
+    if not matched.empty:
+        student = matched.iloc[0]
+        st.success(f"🎉 Name: {student['Name']} \n\n 🏷️ Dept.Branch: {student['Dept.Branch']}")
     else:
-        st.error("❌ Invalid QR Code or Student not found.")
+        st.error("⚠️ Token not found in students.csv")
