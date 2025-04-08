@@ -3,33 +3,41 @@ from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
 import cv2
 import pandas as pd
 
-# Load student data
+# Load CSV with student data
 student_df = pd.read_csv("students.csv")
 valid_tokens = set(student_df["Roll Number"].astype(str))
 
-# UI
-st.title("🎓 College Event QR Scanner")
-st.markdown("📷 Point your camera at the QR Code to check entry")
+# Streamlit UI
+st.set_page_config(page_title="QR Entry", layout="centered")
+st.markdown("## 🎟️ Event QR Scanner")
+st.markdown("📸 Just scan the QR code. No upload, no buttons, just go.")
 
-# Result Display
-result_box = st.empty()
+# Show result
+result_placeholder = st.empty()
 
-class QRScanner(VideoProcessorBase):
+# QR Scanner Class
+class QRProcessor(VideoProcessorBase):
     def __init__(self):
-        self.last_data = None
+        self.last_token = None
 
     def recv(self, frame):
-        img = frame.to_ndarray(format="bgr24")
+        image = frame.to_ndarray(format="bgr24")
         detector = cv2.QRCodeDetector()
-        data, bbox, _ = detector.detectAndDecode(img)
+        data, bbox, _ = detector.detectAndDecode(image)
 
-        if data and data != self.last_data:
-            self.last_data = data
+        if data and data != self.last_token:
+            self.last_token = data
             if data in valid_tokens:
-                result_box.success(f"✅ Allowed: Welcome!")
+                result_placeholder.success(f"✅ Allowed: {data}")
             else:
-                result_box.error("❌ Not Allowed: Invalid QR Code")
-        
-        return img
+                result_placeholder.error("❌ Not Allowed")
 
-webrtc_streamer(key="qr-scanner", video_processor_factory=QRScanner)
+        return image
+
+# Auto launch camera
+webrtc_streamer(
+    key="scan",
+    video_processor_factory=QRProcessor,
+    media_stream_constraints={"video": True, "audio": False},
+    async_processing=True,
+)
