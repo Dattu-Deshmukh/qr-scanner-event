@@ -15,9 +15,9 @@ except FileNotFoundError:
     st.error("❌ Error: 'students.csv' not found. Please upload the student data file.")
     st.stop()
 
-# UI Setup
+# UI Setup with Festive Theme
 st.title("🎉 2k25 Farewell Party Event")
-st.markdown("📷 Point your QR code at the camera to verify entry")
+st.markdown("📷 Scan your QR code here to enter the party!")
 
 # Placeholder for student details
 details_box = st.empty()
@@ -46,7 +46,7 @@ class QRScanner(VideoProcessorBase):
                 roll = student["Roll Number"].iloc[0]
                 name = student["Student Name"].iloc[0]
                 dept = student["Department"].iloc[0]
-                details_box.success(f"✅ Valid Entry\n\n**Roll Number**: {roll}\n**Name**: {name}\n**Department**: {dept}")
+                details_box.success(f"✅ Welcome to the Party!\n\n**Roll Number**: {roll}\n**Name**: {name}\n**Department**: {dept}")
                 # Mark as scanned
                 student_df.loc[student_df["Roll Number"] == data, "Scanned"] = True
                 student_df.to_csv("students.csv", index=False)  # Save updated status
@@ -58,7 +58,7 @@ class QRScanner(VideoProcessorBase):
         # Return the frame for display
         return av.VideoFrame.from_ndarray(img, format="bgr24")
 
-# Start the webcam stream
+# Start the webcam stream (continuous, no stop button)
 webrtc_streamer(
     key="qr-scanner",
     video_processor_factory=QRScanner,
@@ -68,4 +68,4 @@ webrtc_streamer(
 
 # Instructions
 st.markdown("---")
-st.write("**Instructions**: Show your QR code to the camera. Valid codes display your details!")
+st.write("🎊 **How to Enter**: Simply show your QR code to the camera. Valid codes will display your details instantly!")
