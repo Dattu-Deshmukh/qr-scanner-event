@@ -3,6 +3,7 @@ import cv2
 import pandas as pd
 import numpy as np
 from PIL import Image
+import json
 
 # Custom CSS for Google Lens-like styling
 st.markdown(
@@ -64,6 +65,16 @@ def decode_qr(image):
     data, bbox, _ = detector.detectAndDecode(img)
     return data if data else None
 
+# Function to extract roll number from QR data
+def extract_roll_number(qr_data):
+    try:
+        # Attempt to parse JSON if the data is in JSON format
+        data_dict = json.loads(qr_data)
+        return data_dict.get("roll_no")
+    except json.JSONDecodeError:
+        # Return raw data if it's not JSON
+        return qr_data
+
 # Camera input
 image = st.camera_input("Point your QR code at the camera and capture", key="camera_input")
 
@@ -71,33 +82,43 @@ if image is not None:
     # Decode the QR code
     qr_data = decode_qr(Image.open(image))
     if qr_data:
-        # Check if roll number exists and hasn't been scanned
-        student = student_df[student_df["Roll Number"] == qr_data]
-        if not student.empty and not student["Scanned"].iloc[0]:
-            # Display student details
-            roll = student["Roll Number"].iloc[0]
-            name = student["Student Name"].iloc[0]
-            dept = student["Department"].iloc[0]
-            details_box.markdown(
-                '<div class="details-box" style="background-color: #424242; color: white;">'
-                f'✅ Welcome!\n\n**Roll Number**: {roll}\n**Name**: {name}\n**Department**: {dept}'
-                '</div>',
-                unsafe_allow_html=True
-            )
-            # Mark as scanned
-            student_df.loc[student_df["Roll Number"] == qr_data, "Scanned"] = True
-            student_df.to_csv("students.csv", index=False)  # Save updated status
-        elif not student.empty:
-            details_box.markdown(
-                '<div class="details-box" style="background-color: #d32f2f; color: white;">'
-                f'❌ Already Scanned: {qr_data}'
-                '</div>',
-                unsafe_allow_html=True
-            )
+        # Extract roll number from QR data
+        roll_number = extract_roll_number(qr_data)
+        if roll_number:
+            # Check if roll number exists and hasn't been scanned
+            student = student_df[student_df["Roll Number"] == roll_number]
+            if not student.empty and not student["Scanned"].iloc[0]:
+                # Display student details
+                roll = student["Roll Number"].iloc[0]
+                name = student["Student Name"].iloc[0]
+                dept = student["Department"].iloc[0]
+                details_box.markdown(
+                    '<div class="details-box" style="background-color: #424242; color: white;">'
+                    f'✅ Welcome!\n\n**Roll Number**: {roll}\n**Name**: {name}\n**Department**: {dept}'
+                    '</div>',
+                    unsafe_allow_html=True
+                )
+                # Mark as scanned
+                student_df.loc[student_df["Roll Number"] == roll_number, "Scanned"] = True
+                student_df.to_csv("students.csv", index=False)  # Save updated status
+            elif not student.empty:
+                details_box.markdown(
+                    '<div class="details-box" style="background-color: #d32f2f; color: white;">'
+                    f'❌ Already Scanned: {roll_number}'
+                    '</div>',
+                    unsafe_allow_html=True
+                )
+            else:
+                details_box.markdown(
+                    '<div class="details-box" style="background-color: #d32f2f; color: white;">'
+                    f'❌ Invalid QR Code: {roll_number}'
+                    '</div>',
+                    unsafe_allow_html=True
+                )
         else:
             details_box.markdown(
                 '<div class="details-box" style="background-color: #d32f2f; color: white;">'
-                f'❌ Invalid QR Code: {qr_data}'
+                f'❌ Invalid QR Code format: {qr_data}'
                 '</div>',
                 unsafe_allow_html=True
             )
@@ -108,6 +129,12 @@ if image is not None:
             '</div>',
             unsafe_allow_html=True
         )
+
+# Clear photo button
+if image is not None:
+    if st.button("❌ Clear photo"):
+        st.session_state.camera_input = None
+        details_box.empty()
 
 # Instructions
 st.markdown("---")
