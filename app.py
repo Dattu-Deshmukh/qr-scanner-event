@@ -50,13 +50,16 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Coordinator credentials
+# Coordinator credentials (updated with new names)
 VALID_CREDENTIALS = {
     "DATTU": "FAIRWELL2K25",
-    "BHANU": "PARTY2K25",
-    "YUGENDAR": "EVENT2K25",
-    "RAHUL": "WELCOME2K25",
-    "NARENDRA": "CELEBRATE2K25"
+    "BHANU": "PARTY2025",
+    "RAHUL": "EVENT2025",
+    "YUDENDAR": "WELCOME2025",
+    "NARENDRA": "CELEBRATE2025",
+    "coord6": "WELCOME2025",
+    "coord7": "PARTY2025",
+    "coord8": "EVENT2025",
 }
 
 # Login function
@@ -69,7 +72,7 @@ def check_credentials():
         if st.button("Login"):
             if username in VALID_CREDENTIALS and VALID_CREDENTIALS[username] == password:
                 st.session_state.authenticated = True
-                st.success(f"Login successful! Welcome✅, {username}!")
+                st.success(f"Login successful! Welcome, {username}!")
             else:
                 st.error("❌ Invalid username or password. Please try again.")
                 st.stop()
@@ -141,7 +144,7 @@ if check_credentials():
                 elif not student.empty:
                     details_box.markdown(
                         '<div class="details-box" style="background-color: #d32f2f; color: white;">'
-                        f'You're Not Allowed<br>❌ Already Scanned: {roll_number}'
+                        f'❌ Already Scanned: {roll_number}'
                         '</div>',
                         unsafe_allow_html=True
                     )
@@ -166,12 +169,6 @@ if check_credentials():
                 '</div>',
                 unsafe_allow_html=True
             )
-
-    # Clear photo button
-    if image is not None:
-        if st.button("❌ Clear"):
-            st.session_state.camera_input = None
-            details_box.empty()
 
     # Instructions
     st.markdown("---")
