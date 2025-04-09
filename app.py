@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 import json
 
-# Custom CSS for mobile-friendly styling
+# Custom CSS for mobile-friendly live scanning
 st.markdown(
     """
     <style>
@@ -14,7 +14,7 @@ st.markdown(
         color: white;
     }
     .title {
-        font-size: 16px; /* Further reduced for mobile */
+        font-size: 18px; /* Optimized for mobile */
         text-align: center;
         margin: 5px 0;
     }
@@ -24,15 +24,15 @@ st.markdown(
         font-family: 'cursive';
         color: #bbdefb;
     }
-    .upload-box, .manual-box {
+    .capture-box {
         text-align: center;
         margin: 5px 0;
     }
     .details-box {
         text-align: center;
         margin: 5px 0;
-        padding: 5px;
-        border-radius: 5px;
+        padding: 6px;
+        border-radius: 6px;
     }
     .login-box {
         text-align: center;
@@ -40,7 +40,9 @@ st.markdown(
     }
     .stButton>button {
         width: 100%;
-        max-width: 200px;
+        max-width: 180px;
+        font-size: 14px;
+        padding: 8px;
         margin: 5px auto;
     }
     </style>
@@ -94,7 +96,7 @@ if check_credentials():
 
     # UI Setup
     st.markdown('<div class="title">🎉 2k25 Farewell Party Event</div>', unsafe_allow_html=True)
-    st.markdown('<div class="instruction">Upload or enter your QR code data</div>', unsafe_allow_html=True)
+    st.markdown('<div class="instruction">Tap to scan your QR code with camera</div>', unsafe_allow_html=True)
 
     # Placeholder for student details
     details_box = st.empty()
@@ -115,15 +117,11 @@ if check_credentials():
         except json.JSONDecodeError:
             return qr_data
 
-    # Upload image option
-    uploaded_file = st.file_uploader("Tap to upload a QR code photo", type=["jpg", "jpeg", "png"], key="upload_input")
+    # Camera input (mobile-optimized, live scanning only)
+    image = st.camera_input("Tap to scan QR code", key="camera_input")
 
-    # Manual entry option
-    manual_input = st.text_input("Or enter roll number manually", key="manual_input")
-
-    # Process input
-    if uploaded_file is not None:
-        qr_data = decode_qr(Image.open(uploaded_file))
+    if image is not None:
+        qr_data = decode_qr(Image.open(image))
         if qr_data:
             roll_number = extract_roll_number(qr_data)
             if roll_number:
@@ -164,47 +162,17 @@ if check_credentials():
         else:
             details_box.markdown(
                 '<div class="details-box" style="background-color: #d32f2f; color: white;">'
-                '❌ No QR code detected. Try again!'
-                '</div>',
-                unsafe_allow_html=True
-            )
-    elif manual_input:
-        roll_number = manual_input.strip()
-        student = student_df[student_df[column_mapping["Roll Number"]] == roll_number]
-        if not student.empty and not student["Scanned"].iloc[0]:
-            roll = student[column_mapping["Roll Number"]].iloc[0]
-            name = student[column_mapping["Student Name"]].iloc[0]
-            dept = student[column_mapping["Department"]].iloc[0]
-            details_box.markdown(
-                '<div class="details-box" style="background-color: #424242; color: white;">'
-                f'✅ Welcome!\n\n**Roll Number**: {roll}<br>**Name**: {name}<br>**Department**: {dept}'
-                '</div>',
-                unsafe_allow_html=True
-            )
-            student_df.loc[student_df[column_mapping["Roll Number"]] == roll_number, "Scanned"] = True
-            student_df.to_csv("students.csv", index=False)
-        elif not student.empty:
-            details_box.markdown(
-                '<div class="details-box" style="background-color: #d32f2f; color: white;">'
-                f'❌ Already Scanned: {roll_number}'
-                '</div>',
-                unsafe_allow_html=True
-            )
-        else:
-            details_box.markdown(
-                '<div class="details-box" style="background-color: #d32f2f; color: white;">'
-                f'❌ Invalid Roll Number: {roll_number}'
+                '❌ No QR code detected. Try again or adjust camera angle!'
                 '</div>',
                 unsafe_allow_html=True
             )
 
-    # Clear button
-    if uploaded_file is not None or manual_input:
+    # Clear photo button
+    if image is not None:
         if st.button("❌ Clear"):
-            st.session_state.upload_input = None
-            st.session_state.manual_input = ""
-            details_state.empty()
+            st.session_state.camera_input = None
+            details_box.empty()
 
     # Instructions
     st.markdown("---")
-    st.write("🎊 **How to Enter**: 1) Use your phone’s camera to take a photo of your QR code and upload it. 2) Or enter your roll number manually. Check your details!")
+    st.write("🎊 **How to Enter**: Tap 'Tap to scan QR code', allow camera access, and point at your QR code. Adjust lighting or angle if needed. Check your details!")
