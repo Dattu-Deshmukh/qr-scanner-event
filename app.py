@@ -69,7 +69,7 @@ def check_credentials():
         if st.button("Login"):
             if username in VALID_CREDENTIALS and VALID_CREDENTIALS[username] == password:
                 st.session_state.authenticated = True
-                st.success(f"Login successful! Welcome, {username}!")
+                st.success(f"Login successful! Welcome✅, {username}!")
             else:
                 st.error("❌ Invalid username or password. Please try again.")
                 st.stop()
