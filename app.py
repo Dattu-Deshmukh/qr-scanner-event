@@ -128,6 +128,7 @@ if check_credentials():
         if qr_data:
             roll_number = extract_roll_number(qr_data)
             if roll_number:
+                print(f"Checking roll number: {roll_number}")  # Debug print
                 student = student_df[student_df[column_mapping["Roll Number"]] == roll_number]
                 if not student.empty and not student["Scanned"].iloc[0]:
                     roll = student[column_mapping["Roll Number"]].iloc[0]
