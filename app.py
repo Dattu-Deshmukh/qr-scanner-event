@@ -52,11 +52,11 @@ st.markdown(
 
 # Coordinator credentials
 VALID_CREDENTIALS = {
-    "coord1": "FAIRWELL2K25",
-    "coord2": "PARTY2025",
-    "coord3": "EVENT2025",
-    "coord4": "WELCOME2025",
-    "coord5": "CELEBRATE2025"
+    "DATTU": "FAIRWELL2K25",
+    "BHANU": "PARTY2K25",
+    "YUGENDAR": "EVENT2K25",
+    "RAHUL": "WELCOME2K25",
+    "NARENDRA": "CELEBRATE2K25"
 }
 
 # Login function
@@ -141,7 +141,7 @@ if check_credentials():
                 elif not student.empty:
                     details_box.markdown(
                         '<div class="details-box" style="background-color: #d32f2f; color: white;">'
-                        f'❌ Already Scanned: {roll_number}'
+                        f'You're Not Allowed<br>❌ Already Scanned: {roll_number}'
                         '</div>',
                         unsafe_allow_html=True
                     )
