@@ -29,3 +29,9 @@ qr-code-entry-system/
 ├── app.py                     # Streamlit QR scanner (already deployed)
 ├── requirements.txt
 └── README.md
+```
+##💡 Deployment
+Already deployed and accessible at:
+📱 https://qr-scanner-entrypass-fairwell-event.streamlit.app
+No need to run locally — just share the link with your event coordinators.
+
