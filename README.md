@@ -3,8 +3,6 @@
 A simple and secure QR code-based entry system built using **Streamlit**, designed to streamline student check-in during college events.
 
 ✅ **Live App**: https://qr-scanner-entrypass-fairwell-event.streamlit.app
-_(Open this link on your mobile device to scan student QR codes)_
-
 ## 🔍 Features
 
 - 🎫 Unique one-time QR codes generated for each student.
